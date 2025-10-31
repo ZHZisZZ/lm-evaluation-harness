@@ -18,6 +18,7 @@ rng = random.Random(42)
 
 
 def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
+
     def _process_doc(doc):
         choices = [
             preprocess(doc["Incorrect Answer 1"]),
@@ -34,7 +35,7 @@ def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
             "choice2": choices[1],
             "choice3": choices[2],
             "choice4": choices[3],
-            "answer": f"({chr(65 + correct_answer_index)})",
+            "answer": f"{chr(65 + correct_answer_index)}",
         }
         return out_doc
 
