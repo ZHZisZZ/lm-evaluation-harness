@@ -9,4 +9,3 @@ filter_list:
         filter_fn: !function utils.build_predictions_instruct
 metadata:
   version: 4.0
-  
