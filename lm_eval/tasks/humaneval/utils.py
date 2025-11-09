@@ -1,5 +1,6 @@
 import evaluate as hf_evaluate
 
+from lm_eval.tasks.humaneval.sanitize_utils import sanitize
 
 try:
     compute_ = hf_evaluate.load("code_eval")
@@ -43,6 +44,20 @@ def build_predictions_instruct(
     return [
         [
             doc["prompt"] + (r if r.find("```") == -1 else r[: r.find("```")])
+            for r in resp
+        ]
+        for resp, doc in zip(resps, docs)
+    ]
+
+def build_predictions_dream_instruct(
+    resps: list[list[str]], docs: list[dict]
+) -> list[list[str]]:
+    return [
+        [
+            sanitize(
+                doc["prompt"] + "\n" + r.split('```python\n', 1)[-1].split('```')[0],
+                doc["entry_point"]
+            )
             for r in resp
         ]
         for resp, doc in zip(resps, docs)
