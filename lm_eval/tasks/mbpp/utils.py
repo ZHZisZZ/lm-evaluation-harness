@@ -45,22 +45,6 @@ def extract_code_blocks(text: str) -> str:
         return matches[0]
 
 
-class LLaDAExtractCodeBlocks:
-    def apply(self, resps: List[str], docs: List[dict]) -> List[str]:
-        def _extract_one(text: str) -> str:
-            if isinstance(text, list):
-                text = text[0] if len(text) > 0 else ""
-            pattern = r"```(?:\w+)?\n?(.*?)\n?```"
-            matches = re.findall(pattern, text[0], re.DOTALL)
-            if not matches:
-                text_without_lang = re.sub(r"```python", "```", text)
-                matches = re.findall(pattern, text_without_lang, re.DOTALL)
-            return matches[0].strip() if matches else text.strip()
-
-        return [_extract_one(r) for r in resps]
-
-
-
 def build_predictions(resps: list[list[str]], docs: list[dict]) -> list[list[str]]:
     return [[extract_code_blocks(r) for r in resp] for resp in resps]
 
@@ -101,3 +85,65 @@ def list_fewshot_samples():
             "is_fewshot": True,
         },
     ]
+
+
+def pass_at_1_dream(references, predictions):
+    # print(predictions)
+    return pass_at_k.compute(
+        references=references,
+        predictions=[predictions],
+        k=[1],
+    )[0]["pass@1"]
+
+
+def build_predictions_llada(resps: list[list[str]], docs: list[dict]) -> list[list[str]]:
+    return [[_process_answer("```python" + r) for r in resp] for resp in resps]
+
+
+def _process_answer(text):
+    patterns = [
+        r"\[BEGIN\]\s*'(.*)'\s*\[DONE\]",
+        r"BEGIN\s*'(.*)'\s*\[DONE\]",
+        r"\[BEGIN\]\s*'(.*)'\s*DONE",
+        r"BEGIN\s*'(.*)'\s*DONE",
+        r"\[BEGIN\]\s*'(.*)\s*\[DONE\]",
+        r"BEGIN\s*'(.*)\s*\[DONE\]",
+        r"\[BEGIN\]\s*'(.*)\s*DONE",
+        r"BEGIN\s*'(.*)\s*DONE",
+        r'\[BEGIN\]\s*(.*)\s*\[DONE\]',
+        r'BEGIN\s*(.*)\s*\[DONE\]',
+        r'\[BEGIN\]\s*(.*)\s*DONE',
+        r'BEGIN\s*(.*)\s*DONE',
+        r'```python\s*(.*)\s*```',
+        r'```\s*(.*)\s*```',
+        r'```python\s*(.*)\s*$',
+        r'```\s*(.*)\s*$',
+        r'(.*)\s*```.*',
+        r"\[BEGIN\]\s*'(.*)",
+        r'\[BEGIN\](.*)',
+        r"'(.*)'\s*\[DONE\]",
+    ]
+    for p in patterns:
+        try:
+            match = re.search(p, text, re.DOTALL)
+        except TimeoutError:
+            match = None
+
+        if match:
+            text = match.group(1)
+            break
+    text = text.split('```')[0]
+    text = re.split(r"'?\s*\[?DONE\]?", text)[0]
+    text = text.replace('\\_', '_')
+    text = text.strip()
+    if text.startswith("'"):
+        text = text[1:]
+    if text.endswith("'"):
+        text = text[:-1]
+    return text
+
+
+def _process_test(test_case, pred):
+    formatted = pred + '\n'
+    formatted += test_case
+    return formatted

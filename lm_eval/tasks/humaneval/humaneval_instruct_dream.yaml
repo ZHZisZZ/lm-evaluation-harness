@@ -6,6 +6,6 @@ filter_list:
   - name: "create_test"
     filter:
       - function: "custom"
-        filter_fn: !function utils.build_predictions_instruct
+        filter_fn: !function utils.build_predictions_instruct_dream
 metadata:
   version: 2.0

@@ -9,7 +9,7 @@ doc_to_target: "{% if is_fewshot is defined %}{{code}}\n[DONE]{% else %}{{test_l
 gen_prefix: "Here is the completed function:\n```python\n"
 target_delimiter: ""
 metric_list:
-  - metric: !function utils.pass_at_1
+  - metric: !function utils.pass_at_1_dream
     aggregation: mean
     higher_is_better: true
 generation_kwargs:

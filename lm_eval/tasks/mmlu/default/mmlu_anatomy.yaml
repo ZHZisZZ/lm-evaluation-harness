@@ -5,3 +5,15 @@
 "include": "_default_template_yaml"
 "task": "mmlu_anatomy"
 "task_alias": "anatomy"
+filter_list:
+  - name: get_response_custom
+    filter:
+      # Filter everything after the first break line
+      - function: "regex"
+        regex_pattern: "^(.*?)(?=\\n|$)"
+      # Remove leading white spaces
+      - function: remove_whitespace
+      # function to ignore right white spaces or line breaks
+      - function: "regex"
+        regex_pattern: "^(.*?)\\s*$"
+      - function: take_first

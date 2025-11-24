@@ -1,0 +1,10 @@
+include: humaneval_llada.yaml
+task: humaneval_instruct_llada
+doc_to_text: "Complete the following python code:\n{{prompt}}"
+filter_list:
+  - name: "create_test"
+    filter:
+      - function: "custom"
+        filter_fn: !function utils.build_predictions_llada
+metadata:
+  version: 4.0
