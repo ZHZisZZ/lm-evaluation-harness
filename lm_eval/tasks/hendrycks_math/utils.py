@@ -32,6 +32,46 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
     return results
 
 
+import re
+from typing import Dict, List
+
+
+def extract_first_box_or_full(text: str) -> str | None:
+    key = r"\box"
+    start = text.find(key)
+    if start == -1:
+        return text
+
+    # find first '{' after \box or \boxed
+    brace_start = text.find("{", start)
+    if brace_start == -1:
+        return text
+
+    i = brace_start + 1
+    depth = 1
+    while i < len(text) and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+
+    if depth == 0:
+        return text[brace_start + 1 : i - 1]
+
+    return text
+
+
+def build_predictions(resps: list[list[str]], docs: list[dict]) -> list[list[str]]:
+    return_resps = []
+    for resp in resps:
+        for r in resp:
+            answer = extract_first_box_or_full(r)
+            return_resps.append(answer)
+    return return_resps
+
+
+
 # string normalization from https://github.com/EleutherAI/lm-evaluation-harness/blob/master/lm_eval/tasks/hendrycks_math.py
 def is_equiv(str1, str2, verbose=False):
     if str1 is None and str2 is None:

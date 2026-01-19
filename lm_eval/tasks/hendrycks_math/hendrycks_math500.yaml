@@ -1,0 +1,12 @@
+include: hendrycks_math_algebra.yaml
+task: hendrycks_math500
+dataset_name: default
+dataset_path: HuggingFaceH4/MATH-500
+training_split: null
+process_results: !function utils.process_results
+filter_list:
+  - name: "extract_answer"
+    filter:
+      - function: custom
+        filter_fn: !function utils.build_predictions
+test_split: test
