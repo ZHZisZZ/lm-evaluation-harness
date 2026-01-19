@@ -31,6 +31,34 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
     }
     return results
 
+import re
+
+def extract_final_answer(resps: list[list[str]], docs: list[dict]
+) -> list[list[str]]:
+    """
+    优先用“Final Answer”附近的 \\boxed{...}/$...$ 来抽取。
+    回退：取最后一个 boxed/fbox；再回退：取原文。
+    你说“直接用 Final Answer 作为 extraction”，所以这里优先锁定 Final Answer 段。
+    """
+    returned_results = []
+    for resp in resps:
+        for r in resp:
+            # 1) 尝试截取 Final Answer 之后的一小段（避免整篇推导干扰）
+            m = re.search(r"(Final Answer|final answer)\s*[:：]?", r, flags=re.IGNORECASE)
+            tail = r[m.start():] if m else r
+
+            # 2) 先找最后一个 \\boxed / \\fbox（在 tail 内）
+            boxed = last_boxed_only_string(tail)
+            if boxed is not None:
+                try:
+                    boxed = remove_boxed(boxed)
+                    returned_results.append(boxed.strip())
+                except Exception:
+                    returned_results.append(boxed.strip())
+            else:
+                returned_results.append(tail)
+    return returned_results
+
 
 # string normalization from https://github.com/EleutherAI/lm-evaluation-harness/blob/master/lm_eval/tasks/hendrycks_math.py
 def is_equiv(str1, str2, verbose=False):
