@@ -263,11 +263,26 @@ def get_file_datetime(filename: str) -> str:
     return filename[filename.rfind("_") + 1 :].replace(".jsonl", "")
 
 
+# def sanitize_model_name(model_name: str) -> str:
+#     """
+#     Given the model name, returns a sanitized version of it.
+#     """
+#     return re.sub(r"[\"<>:/\|\\?\*\[\]]+", "__", model_name)
+
+from pathlib import Path
 def sanitize_model_name(model_name: str) -> str:
     """
-    Given the model name, returns a sanitized version of it.
+    Extract the last two path components from `model_name` (if it is a path),
+    concatenate them with '-', then sanitize for filesystem safety.
     """
-    return re.sub(r"[\"<>:/|\\?*\[\]]+", "__", model_name)
+    p = Path(model_name)
+
+    if len(p.parts) >= 2:
+        short_name = f"{p.parts[-2]}-{p.parts[-1]}"
+    else:
+        short_name = p.name
+
+    return re.sub(r"[\"<>:/\|\\?\*\[\]]+", "__", short_name)
 
 
 def sanitize_task_name(task_name: str) -> str:
