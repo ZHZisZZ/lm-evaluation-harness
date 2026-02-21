@@ -62,6 +62,21 @@ def build_predictions_llada(resps: list[list[str]], docs: list[dict]) -> list[li
     return processed
 
 
+def build_predictions_llada_fastdllm(
+    resps: list[list[str]], docs: list[dict]
+) -> list[list[str]]:
+    return [
+        [
+            sanitize(
+                doc["prompt"] + "\n" + r.split('```python\n', 1)[-1].split('```')[0],
+                doc["entry_point"],
+            )
+            for r in resp
+        ]
+        for resp, doc in zip(resps, docs)
+    ]
+
+
 def pass_at_k_dream(references: list[str], predictions: list[list[str]], k: list[int] = None):
     global compute_
     assert k is not None
