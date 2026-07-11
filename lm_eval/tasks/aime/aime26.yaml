@@ -1,0 +1,30 @@
+tag:
+  - math_word_problems
+task: aime26
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    validation: /mnt/weka/shrd/research/dataset/eval360/lm-eval/aime26/aime26.jsonl
+output_type: generate_until
+validation_split: validation
+test_split: null
+doc_to_text: "Question: {{completion_input}}\nAnswer:"
+doc_to_target: "{{ground_truth}}"
+process_results: !function utils.process_results
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+generation_kwargs:
+  until:
+    - "Question:"
+    - "</s>"
+    - "<|im_end|>"
+    - "<|eot_id|>"
+  do_sample: false
+  temperature: 0.0
+  max_gen_toks: 8192
+repeats: 1
+num_fewshot: 0
+metadata:
+  version: 1
