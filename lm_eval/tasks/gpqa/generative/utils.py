@@ -1,6 +1,5 @@
 import random
 import re
-from typing import Dict, List, Optional
 
 import datasets
 
@@ -38,28 +37,3 @@ def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
         return out_doc
 
     return dataset.map(_process_doc)
-
-
-def extract_choice_eval360(response: str) -> Optional[str]:
-    leading_answer = re.match(r"^\s*([A-D])(?:\b|(?=[A-Z]))", response)
-    if leading_answer:
-        return leading_answer.group(1).upper()
-
-    patterns = (
-        r"(?is)(?:\*+\s*)?(?:final\s+answer|correct\s+answer|answer)(?:\s*\*+)?"
-        r"\s*(?:is|:|=)?\s*(?:\*+\s*)?\(?\s*([A-D])\s*\)?"
-        r"(?=\s*(?:[\).,:;-]|\*+|\s|$))",
-        r"(?is)the\s+correct\s+answer\s+is\s*(?:\*+\s*)?\(?\s*([A-D])\s*\)?",
-        r"(?im)^\s*(?:\*+\s*)?\(?\s*([A-D])\s*\)?(?:\s*[\).,:;-].*)?$",
-    )
-    for pattern in patterns:
-        matches = re.findall(pattern, response)
-        if matches:
-            return matches[-1].upper()
-    return None
-
-
-def process_results_eval360(doc: dict, results: List[str]) -> Dict[str, int]:
-    prediction = extract_choice_eval360(results[0])
-    target = str(doc["ground_truth"]).strip().upper()
-    return {"exact_match": int(prediction == target)}

@@ -1,56 +1,35 @@
 import re
-from typing import Dict, List, Optional
-
-
-def _boxed_answer(response: str) -> Optional[str]:
-    boxed_answer = last_boxed_only_string(response)
-    if boxed_answer is None:
-        return None
-    try:
-        return remove_boxed(boxed_answer)
-    except (AssertionError, IndexError):
-        return None
-
-
-def _dollar_answer(response: str) -> Optional[str]:
-    indices = [pos for pos, char in enumerate(response) if char == "$"]
-    if len(indices) <= 1:
-        return None
-    return response[indices[-2] + 1 : indices[-1]]
-
-
-def _answer_line(response: str) -> Optional[str]:
-    for line in reversed(response.splitlines()):
-        if not re.search(r"(?i)(?:final\s+answer|answer)", line):
-            continue
-        matches = re.findall(r"(?<![\w.])-?\d{1,3}(?![\w.])", line)
-        if matches:
-            return matches[-1]
-    return None
-
-
-def _last_integer(response: str) -> Optional[str]:
-    matches = re.findall(r"(?<![\w.])-?\d{1,3}(?![\w.])", response)
-    if not matches:
-        return None
-    return matches[-1]
-
-
-def extract_answer(response: str) -> str:
-    for extractor in (_boxed_answer, _answer_line, _last_integer, _dollar_answer):
-        answer = extractor(response)
-        if answer is not None:
-            return answer
-    return response
+from typing import Dict, List
 
 
 def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
+    retval = 0
     response = results[0]
-    answer_key = next(
-        k for k in doc.keys() if k.lower() in {"answer", "ground_truth"}
-    )
+
+    # Try to extract answer from $...$ format first
+    indices = [pos for pos, char in enumerate(response) if char == "$"]
+    if len(indices) <= 1:
+        answer = response
+    else:
+        answer = response[indices[0] + 1 : indices[-1]]
+
+    # Extract from \\boxed{} if present
+    boxed_answer = last_boxed_only_string(response)
+    if boxed_answer is not None:
+        try:
+            boxed_content = remove_boxed(boxed_answer)
+            if boxed_content is not None:
+                answer = boxed_content
+        except (AssertionError, IndexError):
+            pass
+
+    # Check if answer matches target
+    answer_key = next(k for k in doc.keys() if k.lower() == "answer")
     target = str(doc[answer_key])
-    return {"exact_match": int(is_equiv(extract_answer(response), target))}
+    if is_equiv(answer, target):
+        retval = 1
+
+    return {"exact_match": retval}
 
 
 # string normalization from https://github.com/EleutherAI/lm-evaluation-harness/blob/master/lm_eval/tasks/hendrycks_math.py

@@ -32,11 +32,7 @@ fewshot_to_text = partial(format_cot_example, including_answer=True)
 
 
 def process_docs(dataset, subject):
-    return dataset.filter(
-        lambda x: x["category"] == subject,
-        keep_in_memory=True,
-        load_from_cache_file=False,
-    )
+    return dataset.filter(lambda x: x["category"] == subject)
 
 
 process_biology = partial(process_docs, subject="biology")
